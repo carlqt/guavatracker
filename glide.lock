@@ -1,0 +1,6 @@
+hash: ecf424a04aa009fb444afd83fc67b8f6e51195e5bcd2dda460593b06ca37c8aa
+updated: 2017-02-16T21:07:56.405427975+08:00
+imports:
+- name: github.com/pkg/browser
+  version: 8189194c9f158043d6d45a0b939a47a924ea4b13
+testImports: []

@@ -1,0 +1,3 @@
+package: github.com/carlqt/gin-log
+import:
+- package: github.com/pkg/browser
