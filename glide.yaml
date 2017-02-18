@@ -1,3 +1,13 @@
 package: github.com/carlqt/gin-log
 import:
 - package: github.com/pkg/browser
+- package: google.golang.org/api
+  subpackages:
+  - gmail/v1
+- package: golang.org/x/oauth2
+  subpackages:
+  - '...'
+- package: cloud.google.com/go
+  version: ~0.6.0
+  subpackages:
+  - compute/metadata
