@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 
 	"golang.org/x/oauth2"
@@ -30,16 +32,44 @@ func init() {
 
 func main() {
 	defer logFile.Close()
+	ctx := context.Background()
 
 	// Add function to check if access token is available in local ~/.credentials/*.json
-	token, _ := authenticateAccount()
+	client := getClient(ctx)
 
-	logger.Println("the token is:" + token.AccessToken)
+	srv, err := gmail.New(client)
+	if err != nil {
+		log.Fatalf("Unable to retrieve gmail Client %v", err)
+	}
+
+	user := "me"
+	r, err := srv.Users.Labels.List(user).Do()
+	if err != nil {
+		log.Fatalf("Unable to retrieve labels. %v", err)
+	}
+	if len(r.Labels) > 0 {
+		fmt.Print("Labels:\n")
+		for _, l := range r.Labels {
+			fmt.Printf("- %s\n", l.Name)
+		}
+	} else {
+		fmt.Print("No labels found.")
+	}
+
+	// logger.Println("the token is:" + token.AccessToken)
 }
 
-func authenticateAccount() (*oauth2.Token, error) {
+func getClient(ctx context.Context) *http.Client {
 	config, _ := readConfig()
+	token, err := authenticateAccount(config)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	return config.Client(ctx, token)
+}
+
+func authenticateAccount(config *oauth2.Config) (*oauth2.Token, error) {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	browser.OpenURL(authURL)
 
