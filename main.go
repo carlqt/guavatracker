@@ -44,19 +44,7 @@ func main() {
 		logger.Fatalf("Unable to retrieve gmail Client %v", err)
 	}
 
-	acct := "me"
-	r, err := srv.Users.Labels.List(acct).Do()
-	if err != nil {
-		logger.Fatalf("Unable to retrieve labels. %v", err)
-	}
-	if len(r.Labels) > 0 {
-		fmt.Print("Labels:\n")
-		for _, l := range r.Labels {
-			fmt.Printf("- %s\n", l.Name)
-		}
-	} else {
-		fmt.Print("No labels found.")
-	}
+	ListMessages(srv)
 
 	logger.Println("Done")
 }
