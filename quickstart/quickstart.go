@@ -1,4 +1,4 @@
-package main
+package quickstart
 
 import (
 	"encoding/json"
@@ -89,7 +89,7 @@ func saveToken(file string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
-func quickstart() {
+func Quickstart() {
 	ctx := context.Background()
 
 	b, err := ioutil.ReadFile("config/client_id.json")
