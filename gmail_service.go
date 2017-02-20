@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
+	"io"
+
+	"golang.org/x/net/html"
 
 	gmail "google.golang.org/api/gmail/v1"
 )
@@ -17,7 +21,8 @@ func ListMessages(svc *gmail.Service) {
 	for _, m := range listMessages.Messages {
 		msg, _ := svc.Users.Messages.Get("me", m.Id).Format("full").Do()
 		data, _ := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
-		fmt.Println(string(data[:]))
+		byteData := bytes.NewReader(data)
+		displayHtml(byteData)
 	}
 }
 func ListLabels(srv *gmail.Service) {
@@ -39,4 +44,19 @@ func ListLabels(srv *gmail.Service) {
 
 func PrettyPrint(in *gmail.Message) {
 	fmt.Printf("%+v\n", in)
+}
+
+func displayHtml(b io.Reader) {
+	doc := html.NewTokenizer(b)
+
+	for {
+		token := doc.Next()
+		switch {
+		case token == html.ErrorToken:
+			return
+		case token == html.TextToken:
+			t := doc.Token()
+			fmt.Println(t.Data)
+		}
+	}
 }
