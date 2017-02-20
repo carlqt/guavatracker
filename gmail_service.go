@@ -5,8 +5,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"strings"
 
-	"golang.org/x/net/html"
+	"github.com/PuerkitoBio/goquery"
 
 	gmail "google.golang.org/api/gmail/v1"
 )
@@ -21,8 +22,9 @@ func ListMessages(svc *gmail.Service) {
 	for _, m := range listMessages.Messages {
 		msg, _ := svc.Users.Messages.Get("me", m.Id).Format("full").Do()
 		data, _ := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
-		byteData := bytes.NewReader(data)
-		displayHtml(byteData)
+		byteReader := bytes.NewReader(data)
+		body := parseHtml(byteReader)
+		fmt.Println(body)
 	}
 }
 func ListLabels(srv *gmail.Service) {
@@ -46,17 +48,18 @@ func PrettyPrint(in *gmail.Message) {
 	fmt.Printf("%+v\n", in)
 }
 
-func displayHtml(b io.Reader) {
-	doc := html.NewTokenizer(b)
-
-	for {
-		token := doc.Next()
-		switch {
-		case token == html.ErrorToken:
-			return
-		case token == html.TextToken:
-			t := doc.Token()
-			fmt.Println(t.Data)
-		}
+func parseHtml(b io.Reader) (body string) {
+	doc, err := goquery.NewDocumentFromReader(b)
+	if err != nil {
+		logger.Println(err)
 	}
+
+	doc.Find("li").Each(func(i int, s *goquery.Selection) {
+		nodeQuestion := s.ChildrenFiltered("b").Text()
+		nodeAnswer := strings.Replace(s.Text(), nodeQuestion, "", -1)
+
+		body += nodeQuestion + "\n" + nodeAnswer + "\n\n"
+	})
+
+	return body
 }
