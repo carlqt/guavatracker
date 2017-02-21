@@ -1,24 +1,30 @@
-hash: 00541806a2fe2ddb88d9566ceb54c4e7cf6469d0f4a0607effa5dc75e05f0d9e
-updated: 2017-02-16T21:44:01.742703804+08:00
+hash: f05c30b6c6b77a16c2f9ef4bc26202cdf3fb044b6f0ed1aaf7a4ed4b11198b2f
+updated: 2017-02-21T08:17:20.397715002+08:00
 imports:
 - name: cloud.google.com/go
   version: c116c7972ec94f148459a304d07a67ecbc770d4b
   subpackages:
   - compute/metadata
   - internal
+- name: github.com/andybalholm/cascadia
+  version: 349dd0209470eabd9514242c688c403c0926d266
 - name: github.com/golang/protobuf
-  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+  version: 69b215d01a5606c843240eab4937eab3acee6530
   subpackages:
   - proto
 - name: github.com/googleapis/gax-go
   version: da06d194a00e19ce00d9011a13931c3f6f6887c7
 - name: github.com/pkg/browser
   version: 8189194c9f158043d6d45a0b939a47a924ea4b13
+- name: github.com/PuerkitoBio/goquery
+  version: e1271ee34c6a305e38566ecd27ae374944907ee9
 - name: golang.org/x/net
-  version: b4690f45fa1cafc47b1c280c2e75116efe40cc13
+  version: 6b27048ae5e6ad1ef927e72e437531493de612fe
   subpackages:
   - context
   - context/ctxhttp
+  - html
+  - html/atom
   - http2
   - http2/hpack
   - idna

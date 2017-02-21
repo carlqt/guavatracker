@@ -1,4 +1,4 @@
-package: github.com/carlqt/gin-log
+package: github.com/carlqt/guavatracker
 import:
 - package: github.com/pkg/browser
 - package: google.golang.org/api
@@ -11,3 +11,5 @@ import:
   version: ~0.6.0
   subpackages:
   - compute/metadata
+- package: github.com/PuerkitoBio/goquery
+  version: v1.1.0

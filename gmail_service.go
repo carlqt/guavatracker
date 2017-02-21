@@ -61,5 +61,5 @@ func parseHtml(b io.Reader) (body string) {
 		body += nodeQuestion + "\n" + nodeAnswer + "\n\n"
 	})
 
-	return body
+	return strings.TrimSpace(body)
 }
