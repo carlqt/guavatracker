@@ -55,10 +55,12 @@ func parseHtml(b io.Reader) (body string) {
 	}
 
 	doc.Find("li").Each(func(i int, s *goquery.Selection) {
-		nodeQuestion := s.ChildrenFiltered("b").Text()
-		nodeAnswer := strings.Replace(s.Text(), nodeQuestion, "", -1)
+		if em := s.Find("em"); em.Text() == "" {
+			nodeQuestion := s.ChildrenFiltered("b").Text()
+			nodeAnswer := strings.Replace(s.Text(), nodeQuestion, "", -1)
 
-		body += nodeQuestion + "\n" + nodeAnswer + "\n\n"
+			body += nodeQuestion + "\n" + nodeAnswer + "\n\n"
+		}
 	})
 
 	return strings.TrimSpace(body)
