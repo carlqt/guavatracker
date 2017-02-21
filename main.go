@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/user"
+	"path/filepath"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -60,30 +61,13 @@ func getClient(ctx context.Context) *http.Client {
 }
 
 func authenticateAccount(config *oauth2.Config) (token *oauth2.Token, err error) {
-	var tokenPath string
-	user, _ := user.Current()
-	tokenPath = user.HomeDir + "/.credentials/guavatracker.json"
-	f, err := os.Open(tokenPath)
-	defer f.Close()
+	token, success := fetchTokenFromFile(TokenPath()) //If token is already saved in local
 
 	// TODO: Need to handle expired tokens. If token is expire, launch browser
-	if err == nil {
-		err = json.NewDecoder(f).Decode(&token)
-	} else {
-		authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-		browser.OpenURL(authURL)
-
-		var code string
-		fmt.Printf("Please enter access code in the browser: ")
-		if _, err := fmt.Scan(&code); err != nil {
-			logger.Fatalf("Unable to read authorization code %v", err)
-		}
-
-		token, err = config.Exchange(oauth2.NoContext, code)
-		if err != nil {
-			logger.Fatalf("Unable to retrieve token from web %v", err)
-		}
-		saveToken(tokenPath, token)
+	if !success {
+    //If failed to get token from file, get token from web
+    token, err = fetchTokenFromWeb(config)
+    saveToken(TokenPath(), token)
 	}
 
 	return token, err
@@ -103,17 +87,27 @@ func readConfig() (*oauth2.Config, error) {
 	return config, err
 }
 
+func TokenPath() string {
+	user, _ := user.Current()
+	tokenDir := filepath.Join(user.HomeDir, ".credentials")
+	os.MkdirAll(tokenDir, 0700)
+
+  return tokenDir + "guavatracker.json"
+}
+
 // tokenFromFile retrieves a Token from a given file path.
 // It returns the retrieved Token and any read error encountered.
-func tokenFromFile(file string) (*oauth2.Token, error) {
-	f, err := os.Open(file)
+func fetchTokenFromFile(path string) (*oauth2.Token, bool) {
+	// Check if file exists, if YES, return token
+	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, false
 	}
+
 	t := &oauth2.Token{}
 	err = json.NewDecoder(f).Decode(t)
 	defer f.Close()
-	return t, err
+	return t, true 
 }
 
 func saveToken(file string, token *oauth2.Token) {
@@ -124,4 +118,21 @@ func saveToken(file string, token *oauth2.Token) {
 	}
 	defer f.Close()
 	json.NewEncoder(f).Encode(token)
+}
+
+func fetchTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
+  authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+  browser.OpenURL(authURL)
+
+  var code string
+  fmt.Printf("Please enter access code in the browser: ")
+  if _, err := fmt.Scan(&code); err != nil {
+    logger.Fatalf("Unable to read authorization code %v", err)
+  }
+
+  token, err := config.Exchange(oauth2.NoContext, code)
+  if err != nil {
+    logger.Fatalf("Unable to retrieve token from web %v", err)
+  }
+  return token, err
 }
