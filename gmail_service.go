@@ -23,8 +23,9 @@ func ListMessages(svc *gmail.Service) {
 		msg, _ := svc.Users.Messages.Get("me", m.Id).Format("full").Do()
 		data, _ := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
 		byteReader := bytes.NewReader(data)
-		body := parseHtml(byteReader)
-		fmt.Println(body)
+		parseHtml(byteReader)
+		// pivotal.NewTicket
+		// fmt.Println(body)
 	}
 }
 func ListLabels(srv *gmail.Service) {

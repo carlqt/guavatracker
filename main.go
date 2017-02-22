@@ -16,11 +16,16 @@ import (
 	"golang.org/x/oauth2/google"
 	gmail "google.golang.org/api/gmail/v1"
 
+	"github.com/carlqt/guavatracker/pivotal"
 	"github.com/pkg/browser"
 )
 
 var logger *log.Logger
 var logFile *os.File
+
+const (
+	pivotalToken = "d1f26e67a5273ea05f4926a241f7355d"
+)
 
 func init() {
 	var err error
@@ -48,6 +53,9 @@ func main() {
 	ListMessages(srv)
 
 	logger.Println("Done")
+
+	ticket := &pivotal.Ticket{}
+	ticket.Show()
 }
 
 func getClient(ctx context.Context) *http.Client {
@@ -65,9 +73,9 @@ func authenticateAccount(config *oauth2.Config) (token *oauth2.Token, err error)
 
 	// TODO: Need to handle expired tokens. If token is expire, launch browser
 	if !success {
-    //If failed to get token from file, get token from web
-    token, err = fetchTokenFromWeb(config)
-    saveToken(TokenPath(), token)
+		//If failed to get token from file, get token from web
+		token, err = fetchTokenFromWeb(config)
+		saveToken(TokenPath(), token)
 	}
 
 	return token, err
@@ -92,7 +100,7 @@ func TokenPath() string {
 	tokenDir := filepath.Join(user.HomeDir, ".credentials")
 	os.MkdirAll(tokenDir, 0700)
 
-  return tokenDir + "guavatracker.json"
+	return tokenDir + "guavatracker.json"
 }
 
 // tokenFromFile retrieves a Token from a given file path.
@@ -107,7 +115,7 @@ func fetchTokenFromFile(path string) (*oauth2.Token, bool) {
 	t := &oauth2.Token{}
 	err = json.NewDecoder(f).Decode(t)
 	defer f.Close()
-	return t, true 
+	return t, true
 }
 
 func saveToken(file string, token *oauth2.Token) {
@@ -121,18 +129,18 @@ func saveToken(file string, token *oauth2.Token) {
 }
 
 func fetchTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
-  authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-  browser.OpenURL(authURL)
+	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+	browser.OpenURL(authURL)
 
-  var code string
-  fmt.Printf("Please enter access code in the browser: ")
-  if _, err := fmt.Scan(&code); err != nil {
-    logger.Fatalf("Unable to read authorization code %v", err)
-  }
+	var code string
+	fmt.Printf("Please enter access code in the browser: ")
+	if _, err := fmt.Scan(&code); err != nil {
+		logger.Fatalf("Unable to read authorization code %v", err)
+	}
 
-  token, err := config.Exchange(oauth2.NoContext, code)
-  if err != nil {
-    logger.Fatalf("Unable to retrieve token from web %v", err)
-  }
-  return token, err
+	token, err := config.Exchange(oauth2.NoContext, code)
+	if err != nil {
+		logger.Fatalf("Unable to retrieve token from web %v", err)
+	}
+	return token, err
 }
