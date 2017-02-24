@@ -49,6 +49,7 @@ func PrettyPrint(in *gmail.Message) {
 }
 
 func parseHtml(b io.Reader) (body string) {
+	var nodeAnswer string
 	doc, err := goquery.NewDocumentFromReader(b)
 	if err != nil {
 		logger.Println(err)
@@ -57,11 +58,27 @@ func parseHtml(b io.Reader) (body string) {
 	doc.Find("li").Each(func(i int, s *goquery.Selection) {
 		if em := s.Find("em"); em.Text() == "" {
 			nodeQuestion := s.ChildrenFiltered("b").Text()
-			nodeAnswer := strings.Replace(s.Text(), nodeQuestion, "", -1)
+
+			if anchor := s.Find("a"); anchor.Text() != "" {
+				href := showHREF(anchor)
+				nodeAnswer = href
+			} else {
+				nodeAnswer = strings.Replace(s.Text(), nodeQuestion, "", -1)
+			}
 
 			body += nodeQuestion + "\n" + nodeAnswer + "\n\n"
 		}
 	})
 
 	return strings.TrimSpace(body)
+}
+
+func showHREF(s *goquery.Selection) (val string) {
+	for _, node := range s.Nodes {
+		for _, attr := range node.Attr {
+			val = attr.Val
+		}
+	}
+
+	return val
 }
