@@ -65,7 +65,7 @@ func TokenPath() string {
 	tokenDir := filepath.Join(user.HomeDir, ".credentials")
 	os.MkdirAll(tokenDir, 0700)
 
-	return tokenDir + "/guavatracker.json"
+	return tokenDir + "guavatracker.json"
 }
 
 // tokenFromFile retrieves a Token from a given file path.

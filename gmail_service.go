@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"strings"
@@ -20,11 +22,11 @@ func ListMessages(svc *gmail.Service) {
 
 	for _, m := range listMessages.Messages {
 		msg, _ := svc.Users.Messages.Get("me", m.Id).Format("full").Do()
+		data, _ := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
+		byteReader := bytes.NewReader(data)
+		body := parseHtml(byteReader)
 		markAsRead(msg, msgService)
-		// data, _ := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
-		// byteReader := bytes.NewReader(data)
-		// body := parseHtml(byteReader)
-		// fmt.Println(body)
+		fmt.Println(body)
 	}
 }
 func ListLabels(srv *gmail.Service) {
@@ -84,16 +86,10 @@ func linkURL(s *goquery.Selection) (val string) {
 	return val
 }
 
-func markAsRead(m *gmail.Message, svc *gmail.UsersMessagesService) {
+func markAsRead(m *gmail.Message, svc *gmail.UsersMessagesService) error {
 	unread := []string{"UNREAD"}
 	msgRequest := gmail.ModifyMessageRequest{RemoveLabelIds: unread}
-	// url := "https://www.googleapis.com/gmail/v1/users/me/messages/" + m.ThreadId + "/modify"
+	_, err := svc.Modify("me", m.Id, &msgRequest).Do()
 
-	msg, err := svc.Modify("me", m.Id, &msgRequest).Do()
-
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	fmt.Println(msg.LabelIds)
+	return err
 }
