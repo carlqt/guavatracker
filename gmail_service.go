@@ -9,6 +9,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 
+	"github.com/carlqt/guavatracker/pivotal"
 	gmail "google.golang.org/api/gmail/v1"
 )
 
@@ -24,6 +25,9 @@ func ListMessages(svc *gmail.Service) {
 		msg, _ := svc.Users.Messages.Get("me", m.Id).Format("full").Do()
 		data, _ := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
 		byteReader := bytes.NewReader(data)
+
+		ticket := pivotal.NewTicket()
+		ticket.Create()
 		// pivotal.NewTicket
 		// fmt.Println(body)
 		body := parseHtml(byteReader)

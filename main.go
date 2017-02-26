@@ -16,6 +16,7 @@ import (
 	"golang.org/x/oauth2/google"
 	gmail "google.golang.org/api/gmail/v1"
 
+	"github.com/carlqt/guavatracker/pivotal"
 	"github.com/pkg/browser"
 )
 
@@ -123,17 +124,22 @@ func init() {
 
 func main() {
 	defer logFile.Close()
-	ctx := context.Background()
+	// ctx := context.Background()
 
 	// Add function to check if access token is available in local ~/.credentials/*.json
-	client := getClient(ctx)
+	// client := getClient(ctx)
 
-	srv, err := gmail.New(client)
-	if err != nil {
-		logger.Fatalf("Unable to retrieve gmail Client %v", err)
-	}
+	// srv, err := gmail.New(client)
+	// if err != nil {
+	// 	logger.Fatalf("Unable to retrieve gmail Client %v", err)
+	// }
 
-	ListMessages(srv)
+	// ListMessages(srv)
+
+	ticket := pivotal.NewTicket()
+	ticket.Name = "Automation Test"
+	ticket.Description = "This is created through carlqt bot automation"
+	ticket.Create()
 
 	logger.Println("Done")
 }
