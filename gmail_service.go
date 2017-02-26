@@ -13,6 +13,7 @@ import (
 	gmail "google.golang.org/api/gmail/v1"
 )
 
+// Messages returns a slice messages from the gmail api
 func Messages(svc *gmail.Service) ([]*gmail.Message, error) {
 	acct := "me"
 	msgService := svc.Users.Messages
@@ -27,6 +28,8 @@ func Messages(svc *gmail.Service) ([]*gmail.Message, error) {
 
 	return messages, err
 }
+
+// ListLabels returns a list of gmail labels. Not used
 func ListLabels(srv *gmail.Service) {
 	acct := "me"
 	r, err := srv.Users.Labels.List(acct).Do()
@@ -44,13 +47,40 @@ func ListLabels(srv *gmail.Service) {
 
 }
 
-func PrettyPrint(in *gmail.Message) {
-	fmt.Printf("%+v\n", in)
+// DecodeGmailBody decodes the message body to string
+func DecodeGmailBody(m *gmail.Message) (string, error) {
+	var err error
+	// decode body
+	data, err := base64.URLEncoding.DecodeString(m.Payload.Body.Data)
+	if err != nil {
+		return "", err
+	}
+
+	byteReader := bytes.NewReader(data)
+	return parseHTMLBody(byteReader), err
 }
 
 // Private functions
 
-func ParseHtmlBody(b io.Reader) (body string) {
+func linkURL(s *goquery.Selection) (val string) {
+	for _, node := range s.Nodes {
+		for _, attr := range node.Attr {
+			val = attr.Val
+		}
+	}
+
+	return val
+}
+
+func markAsRead(m *gmail.Message, svc *gmail.UsersMessagesService) error {
+	unread := []string{"UNREAD"}
+	msgRequest := gmail.ModifyMessageRequest{RemoveLabelIds: unread}
+	_, err := svc.Modify("me", m.Id, &msgRequest).Do()
+
+	return err
+}
+
+func parseHTMLBody(b io.Reader) (body string) {
 	var nodeAnswer string
 	doc, err := goquery.NewDocumentFromReader(b)
 	if err != nil {
@@ -72,34 +102,4 @@ func ParseHtmlBody(b io.Reader) (body string) {
 	})
 
 	return strings.TrimSpace(body)
-}
-
-func linkURL(s *goquery.Selection) (val string) {
-	for _, node := range s.Nodes {
-		for _, attr := range node.Attr {
-			val = attr.Val
-		}
-	}
-
-	return val
-}
-
-func markAsRead(m *gmail.Message, svc *gmail.UsersMessagesService) error {
-	unread := []string{"UNREAD"}
-	msgRequest := gmail.ModifyMessageRequest{RemoveLabelIds: unread}
-	_, err := svc.Modify("me", m.Id, &msgRequest).Do()
-
-	return err
-}
-
-func DecodeGmailBody(m *gmail.Message) (string, error) {
-	var err error
-	// decode body
-	data, err := base64.URLEncoding.DecodeString(m.Payload.Body.Data)
-	if err != nil {
-		return "", err
-	}
-
-	byteReader := bytes.NewReader(data)
-	return ParseHtmlBody(byteReader), err
 }
