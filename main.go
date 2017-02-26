@@ -122,24 +122,38 @@ func init() {
 	logger = log.New(mw, "", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
-func main() {
-	defer logFile.Close()
-	// ctx := context.Background()
-
-	// Add function to check if access token is available in local ~/.credentials/*.json
-	// client := getClient(ctx)
-
-	// srv, err := gmail.New(client)
-	// if err != nil {
-	// 	logger.Fatalf("Unable to retrieve gmail Client %v", err)
-	// }
-
-	// ListMessages(srv)
+func createTicket(m *gmail.Message) {
+	description, _ := DecodeGmailBody(m)
 
 	ticket := pivotal.NewTicket()
 	ticket.Name = "Automation Test"
-	ticket.Description = "This is created through carlqt bot automation"
+	ticket.Description = description
 	ticket.Create()
+}
 
+func main() {
+	defer logFile.Close()
+	ctx := context.Background()
+
+	// Add function to check if access token is available in local ~/.credentials/*.json
+	client := getClient(ctx)
+	svc, err := gmail.New(client)
+	if err != nil {
+		logger.Fatalf("Unable to retrieve gmail Client %v", err)
+	}
+
+	// retrieve messages from the client
+	messages, err := Messages(svc)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	// loop through each messages return
+	// then create a pivotal tracker ticket
+	for _, m := range messages {
+		msg, _ := svc.Users.Messages.Get("me", m.Id).Format("full").Do()
+		markAsRead(msg, svc.Users.Messages)
+		createTicket(msg)
+	}
 	logger.Println("Done")
 }

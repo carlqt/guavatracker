@@ -3,37 +3,29 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 
-	"github.com/carlqt/guavatracker/pivotal"
 	gmail "google.golang.org/api/gmail/v1"
 )
 
-func ListMessages(svc *gmail.Service) {
+func Messages(svc *gmail.Service) ([]*gmail.Message, error) {
 	acct := "me"
 	msgService := svc.Users.Messages
 	listMessages, err := msgService.List(acct).Q("label:unread from:notifications@typeform.com").Do()
+	messages := listMessages.Messages
+
 	if err != nil {
-		logger.Fatal(err)
+		return messages, err
+	} else if len(messages) < 1 {
+		return messages, errors.New("No messages found")
 	}
 
-	for _, m := range listMessages.Messages {
-		msg, _ := svc.Users.Messages.Get("me", m.Id).Format("full").Do()
-		data, _ := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
-		byteReader := bytes.NewReader(data)
-
-		ticket := pivotal.NewTicket()
-		ticket.Create()
-		// pivotal.NewTicket
-		// fmt.Println(body)
-		body := parseHtml(byteReader)
-		markAsRead(msg, msgService)
-		fmt.Println(body)
-	}
+	return messages, err
 }
 func ListLabels(srv *gmail.Service) {
 	acct := "me"
@@ -58,11 +50,11 @@ func PrettyPrint(in *gmail.Message) {
 
 // Private functions
 
-func parseHtml(b io.Reader) (body string) {
+func ParseHtmlBody(b io.Reader) (body string) {
 	var nodeAnswer string
 	doc, err := goquery.NewDocumentFromReader(b)
 	if err != nil {
-		logger.Println(err)
+		logger.Fatal(err)
 	}
 
 	doc.Find("li").Each(func(i int, s *goquery.Selection) {
@@ -98,4 +90,16 @@ func markAsRead(m *gmail.Message, svc *gmail.UsersMessagesService) error {
 	_, err := svc.Modify("me", m.Id, &msgRequest).Do()
 
 	return err
+}
+
+func DecodeGmailBody(m *gmail.Message) (string, error) {
+	var err error
+	// decode body
+	data, err := base64.URLEncoding.DecodeString(m.Payload.Body.Data)
+	if err != nil {
+		return "", err
+	}
+
+	byteReader := bytes.NewReader(data)
+	return ParseHtmlBody(byteReader), err
 }

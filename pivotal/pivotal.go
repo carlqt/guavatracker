@@ -53,7 +53,6 @@ func NewTicket() Ticket {
 
 func (t *Ticket) Create() {
 	jsonVal, err := json.Marshal(t)
-	fmt.Println(string(jsonVal[:]))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -69,7 +68,6 @@ func (t *Ticket) Create() {
 	}
 
 	defer resp.Body.Close()
-	showJSON(resp)
 	err = json.NewDecoder(resp.Body).Decode(t)
 	if err != nil {
 		log.Fatal(err)
