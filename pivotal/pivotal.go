@@ -3,7 +3,6 @@ package pivotal
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -35,9 +34,7 @@ type errorResponse struct {
 }
 
 const (
-	baseURL       = "https://www.pivotaltracker.com/services/v5/projects"
-	apiToken      = "d1f26e67a5273ea05f4926a241f7355d"
-	landingPageID = "1927121"
+	baseURL = "https://www.pivotaltracker.com/services/v5/projects"
 )
 
 func NewTicket(c *appconfig.Config) Ticket {
@@ -80,33 +77,7 @@ func (t *Ticket) Create() {
 	log.Println("Success!")
 }
 
-func (t *Ticket) Show() {
-	t.APIToken = apiToken
-	t.ProjectID = 1927121
-
-	strProjectID := strconv.Itoa(t.ProjectID)
-
-	req, err := http.NewRequest("GET", baseURL+strProjectID+"/stories/139780413", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	req.Header.Add("X-TrackerToken", t.APIToken)
-	client := http.Client{}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-	// showJSON(resp)
-	err = json.NewDecoder(resp.Body).Decode(t)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("%+v", t)
-}
-
+// helper function for debugger purposes
 func showJSON(r *http.Response) {
 	io.Copy(os.Stdout, r.Body)
 }
