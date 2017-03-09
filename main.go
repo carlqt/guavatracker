@@ -16,12 +16,14 @@ import (
 	"golang.org/x/oauth2/google"
 	gmail "google.golang.org/api/gmail/v1"
 
+	"github.com/carlqt/guavatracker/appconfig"
 	"github.com/carlqt/guavatracker/pivotal"
 	"github.com/pkg/browser"
 )
 
 var logger *log.Logger
 var logFile *os.File
+var config *appconfig.Config
 
 func getClient(ctx context.Context) *http.Client {
 	config, _ := readConfig()
@@ -49,7 +51,7 @@ func authenticateAccount(config *oauth2.Config) (token *oauth2.Token, err error)
 
 func readConfig() (*oauth2.Config, error) {
 	// parse client_id.json file
-	b, err := ioutil.ReadFile("config/client_id.json")
+	b, err := ioutil.ReadFile(config.ClientIDPath)
 	if err != nil {
 		logger.Fatalf("Unable to read client secret file: %v", err)
 	}
@@ -111,6 +113,15 @@ func fetchTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
 	return token, err
 }
 
+func createTicket(m *gmail.Message) {
+	description, _ := DecodeGmailBody(m)
+
+	ticket := pivotal.NewTicket(config)
+	ticket.Name = "Automation Test"
+	ticket.Description = description
+	ticket.Create()
+}
+
 func init() {
 	var err error
 	logFile, err = os.OpenFile("server.log", os.O_RDWR|os.O_APPEND, 0660)
@@ -118,17 +129,9 @@ func init() {
 		log.Fatal(err)
 	}
 
+	config = appconfig.NewConfig()
 	mw := io.MultiWriter(logFile, os.Stdout)
 	logger = log.New(mw, "", log.Ldate|log.Ltime|log.Lshortfile)
-}
-
-func createTicket(m *gmail.Message) {
-	description, _ := DecodeGmailBody(m)
-
-	ticket := pivotal.NewTicket()
-	ticket.Name = "Automation Test"
-	ticket.Description = description
-	ticket.Create()
 }
 
 func main() {
@@ -148,7 +151,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	// loop through each messages return
+	// loop through each messages returned
 	// then create a pivotal tracker ticket
 	for _, m := range messages {
 		msg, _ := svc.Users.Messages.Get("me", m.Id).Format("full").Do()

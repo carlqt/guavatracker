@@ -11,6 +11,8 @@ import (
 	"os"
 	"path"
 	"strconv"
+
+	"github.com/carlqt/guavatracker/appconfig"
 )
 
 type Ticket struct {
@@ -38,13 +40,14 @@ const (
 	landingPageID = "1927121"
 )
 
-func NewTicket() Ticket {
+func NewTicket(c *appconfig.Config) Ticket {
 	u, _ := url.Parse(baseURL)
-	u.Path = path.Join(u.Path, landingPageID, "stories")
+	u.Path = path.Join(u.Path, c.ProjectID, "stories")
+	id, _ := strconv.Atoi(c.ProjectID)
 
 	return Ticket{
-		ProjectID:    1927121,
-		APIToken:     apiToken,
+		ProjectID:    id,
+		APIToken:     c.PivotalToken,
 		url:          u.String(),
 		StoryType:    "feature",
 		CurrentState: "unstarted",
