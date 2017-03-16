@@ -114,10 +114,10 @@ func fetchTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
 }
 
 func createTicket(m *gmail.Message) {
-	description, _ := DecodeGmailBody(m)
+	description, name, _ := DecodeGmailBody(m)
 
 	ticket := pivotal.NewTicket(config)
-	ticket.Name = "Automation Test"
+	ticket.Name = "Corporate Landing Page " + name
 	ticket.Description = description
 	ticket.Create()
 }

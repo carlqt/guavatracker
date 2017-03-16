@@ -48,16 +48,16 @@ func ListLabels(srv *gmail.Service) {
 }
 
 // DecodeGmailBody decodes the message body to string
-func DecodeGmailBody(m *gmail.Message) (string, error) {
-	var err error
+func DecodeGmailBody(m *gmail.Message) (desc string, name string, err error) {
 	// decode body
 	data, err := base64.URLEncoding.DecodeString(m.Payload.Body.Data)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	byteReader := bytes.NewReader(data)
-	return parseHTMLBody(byteReader), err
+	desc, name = parseHTMLBody(byteReader)
+	return desc, name, err
 }
 
 // Private functions
@@ -80,8 +80,11 @@ func markAsRead(m *gmail.Message, svc *gmail.UsersMessagesService) error {
 	return err
 }
 
-func parseHTMLBody(b io.Reader) (body string) {
+// Parses the gmail html to get the value for Description and Name
+func parseHTMLBody(b io.Reader) (body, name string) {
 	var nodeAnswer string
+	var temp []string
+
 	doc, err := goquery.NewDocumentFromReader(b)
 	if err != nil {
 		logger.Fatal(err)
@@ -92,14 +95,21 @@ func parseHTMLBody(b io.Reader) (body string) {
 			nodeQuestion := s.ChildrenFiltered("b").Text()
 
 			if anchor := s.Find("a"); anchor.Text() != "" {
+				// extracts the image source if banner was given.
 				nodeAnswer = linkURL(anchor)
 			} else {
 				nodeAnswer = strings.Replace(s.Text(), nodeQuestion, "", -1)
+			}
+
+			if nodeQuestion == "What URL would you like for your landing page?" {
+				// extract the string that will become the name of the ticket
+				temp = strings.Split(nodeAnswer, "/")
+				name = temp[len(temp)-1]
 			}
 
 			body += nodeQuestion + "\n" + nodeAnswer + "\n\n"
 		}
 	})
 
-	return strings.TrimSpace(body)
+	return strings.TrimSpace(body), name
 }
