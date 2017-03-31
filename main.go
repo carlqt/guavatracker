@@ -82,6 +82,11 @@ func fetchTokenFromFile(path string) (*oauth2.Token, bool) {
 
 	t := &oauth2.Token{}
 	err = json.NewDecoder(f).Decode(t)
+	if err != nil {
+		logger.Fatal(err)
+		return nil, false
+	}
+
 	defer f.Close()
 	return t, true
 }
